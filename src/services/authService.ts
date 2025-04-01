@@ -4,7 +4,7 @@ import axios from 'axios';
 export interface LoginCredentials {
   email: string;
   password: string;
-  fcm_token?: string;
+  // fcm_token?: string;
 }
 
 export interface LoginResponse {
@@ -18,12 +18,12 @@ export interface LoginResponse {
 }
 
 export const authService = {
-  login: async (email: string, password: string, fcmToken?: string) => {
+  login: async (email: string, password: string) => {
     try {
       const response = await api.post<LoginResponse>('/login', {
         email,
         password,
-        fcm_token: fcmToken,
+        // fcm_token: fcmToken,
       });
       return response;
     } catch (error) {

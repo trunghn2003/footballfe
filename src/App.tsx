@@ -16,6 +16,7 @@ import Competitions from './pages/Competitions';
 import CompetitionDetail from './pages/CompetitionDetail';
 import CompetitionMatches from './pages/CompetitionMatches';
 import MatchDetail from './pages/MatchDetail';
+import NewsDetail from './pages/NewsDetail';
 
 const theme = createTheme({
   palette: {
@@ -69,6 +70,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <News />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/news/:id"
+                  element={
+                    <ProtectedRoute>
+                      <NewsDetail />
                     </ProtectedRoute>
                   }
                 />
