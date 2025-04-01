@@ -4,7 +4,7 @@ import api from '../config/api';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: (email: string, password: string, fcmToken?: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -27,9 +27,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string, fcmToken?: string) => {
+  const login = async (email: string, password: string) => {
     try {
-      const response = await authService.login(email, password, fcmToken);
+      const response = await authService.login(email, password);
       if (response.data.success) {
         // Lưu token vào localStorage
         localStorage.setItem('token', response.data.data.access_token);

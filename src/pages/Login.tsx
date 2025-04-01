@@ -11,14 +11,14 @@ import {
   Alert
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
-import { getToken } from 'firebase/messaging';
-import { messaging } from '../firebase-config';
+// import { getToken } from 'firebase/messaging';
+// import { messaging } from '../firebase-config';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [fcmToken, setFcmToken] = useState<string | undefined>(undefined);
+  // const [fcmToken, setFcmToken] = useState<string | undefined>(undefined);
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,18 +26,18 @@ const Login = () => {
 
   useEffect(() => {
     // Lấy FCM token khi component mount
-    const getFcmToken = async () => {
-      try {
-        const token = await getToken(messaging, {
-          vapidKey: 'BGzCk1XlL1VbqxeNnM01zaaRY1RnZhEoHF9PRUbv4Jpxj2EUILHEJtHExlIwJa9KHTrSNh56cmFH3p7WG0Cqu3c'
-        });
-        setFcmToken(token || undefined);
-      } catch (error) {
-        console.error('Failed to get FCM token:', error);
-      }
-    };
+    // const getFcmToken = async () => {
+    //   try {
+    //     const token = await getToken(messaging, {
+    //       vapidKey: 'BGzCk1XlL1VbqxeNnM01zaaRY1RnZhEoHF9PRUbv4Jpxj2EUILHEJtHExlIwJa9KHTrSNh56cmFH3p7WG0Cqu3c'
+    //     });
+    //     setFcmToken(token || undefined);
+    //   } catch (error) {
+    //     console.error('Failed to get FCM token:', error);
+    //   }
+    // };
 
-    getFcmToken();
+    // getFcmToken();
   }, []);
 
   const from = (location.state as any)?.from?.pathname || '/';
@@ -48,7 +48,7 @@ const Login = () => {
     setIsSubmitting(true);
 
     try {
-      await login(email, password, fcmToken);
+      await login(email, password);
       navigate(from);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Đăng nhập thất bại');
