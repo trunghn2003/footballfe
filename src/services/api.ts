@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:9000',
+  baseURL: import.meta.env.VITE_API_URL || 'http://157.66.47.51:9000',
 });
 
 // Request interceptor - thêm token vào header
