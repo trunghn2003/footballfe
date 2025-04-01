@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_URL = 'http://127.0.0.1:8000/api';
+export const API_URL = 'http://157.66.47.51:9000/api';
 
 // Tạo instance axios với config mặc định
 const api = axios.create({
