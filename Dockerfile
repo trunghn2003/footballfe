@@ -16,19 +16,12 @@ COPY . .
 # Build the app
 RUN npm run build
 
-# Production Stage
+
 FROM nginx:alpine
-
-# Copy Nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Create directory for SSL certificates
-RUN mkdir -p /etc/nginx/ssl
-
 # Copy the built app
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # Expose ports
-EXPOSE 80 443
+EXPOSE 80 
 
 CMD ["nginx", "-g", "daemon off;"]
