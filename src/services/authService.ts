@@ -17,6 +17,22 @@ export interface LoginResponse {
   };
 }
 
+export interface RegisterResponse {
+  success: boolean;
+  message: string;
+  data: {
+    success: boolean;
+    user: {
+      id: number;
+      name: string;
+      email: string;
+      created_at: string;
+      updated_at: string;
+    };
+    token: string;
+  };
+}
+
 export const authService = {
   login: async (email: string, password: string) => {
     try {
@@ -40,5 +56,21 @@ export const authService = {
 
   getToken: () => {
     return localStorage.getItem('token');
+  },
+
+  register: async (name: string, email: string, password: string) => {
+    try {
+      const response = await api.post<RegisterResponse>('/register', {
+        name,
+        email,
+        password,
+      });
+      return response;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.response?.data?.message || 'Đăng ký thất bại');
+      }
+      throw error;
+    }
   },
 };
