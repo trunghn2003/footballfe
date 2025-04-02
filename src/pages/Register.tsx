@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -11,47 +11,33 @@ import {
   Alert
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
-// import { getToken } from 'firebase/messaging';
-// import { messaging } from '../firebase-config';
 
-const Login = () => {
+const Register = () => {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  // const [fcmToken, setFcmToken] = useState<string | undefined>(undefined);
-  const { login } = useAuth();
+  const { register } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    // Lấy FCM token khi component mount
-    // const getFcmToken = async () => {
-    //   try {
-    //     const token = await getToken(messaging, {
-    //       vapidKey: 'BGzCk1XlL1VbqxeNnM01zaaRY1RnZhEoHF9PRUbv4Jpxj2EUILHEJtHExlIwJa9KHTrSNh56cmFH3p7WG0Cqu3c'
-    //     });
-    //     setFcmToken(token || undefined);
-    //   } catch (error) {
-    //     console.error('Failed to get FCM token:', error);
-    //   }
-    // };
-
-    // getFcmToken();
-  }, []);
-
-  const from = (location.state as any)?.from?.pathname || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (password !== confirmPassword) {
+      setError('Mật khẩu không khớp');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      await login(email, password);
-      navigate(from);
+      await register(name, email, password);
+      navigate('/login');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đăng nhập thất bại');
+      setError(err instanceof Error ? err.message : 'Đăng ký thất bại');
     } finally {
       setIsSubmitting(false);
     }
@@ -78,7 +64,7 @@ const Login = () => {
           }}
         >
           <Typography component="h1" variant="h5" gutterBottom>
-            Đăng nhập
+            Đăng ký
           </Typography>
           {error && (
             <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
@@ -90,11 +76,23 @@ const Login = () => {
               margin="normal"
               required
               fullWidth
+              id="name"
+              label="Họ và tên"
+              name="name"
+              autoComplete="name"
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={isSubmitting}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
               id="email"
               label="Email"
               name="email"
               autoComplete="email"
-              autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isSubmitting}
@@ -107,9 +105,20 @@ const Login = () => {
               label="Mật khẩu"
               type="password"
               id="password"
-              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={isSubmitting}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="confirmPassword"
+              label="Xác nhận mật khẩu"
+              type="password"
+              id="confirmPassword"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={isSubmitting}
             />
             <Button
@@ -122,16 +131,8 @@ const Login = () => {
               {isSubmitting ? (
                 <CircularProgress size={24} color="inherit" />
               ) : (
-                'Đăng nhập'
+                'Đăng ký'
               )}
-            </Button>
-            <Button
-              fullWidth
-              variant="text"
-              onClick={() => navigate('/register')}
-              sx={{ mt: 1 }}
-            >
-              Chưa có tài khoản? Đăng ký ngay
             </Button>
           </Box>
         </Paper>
@@ -140,4 +141,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Register;
