@@ -37,11 +37,22 @@ export interface Team {
 export interface Competition {
   id: number;
   name: string;
-  code: string | null;
-  type: string | null;
-  emblem: string | null;
-  area: Area | null;
-  currentSeason: Season | null;
+  code: string;
+  type: string;
+  emblem: string;
+  area: {
+    id: number;
+    name: string;
+    code: string | null;
+    flag: string;
+  };
+  currentSeason: {
+    id: number;
+    name: string;
+    start: string;
+    end: string;
+    competitionName: string;
+  };
 }
 
 export interface CompetitionsResponse {
@@ -217,6 +228,15 @@ export interface MatchDetailResponse {
   };
 }
 
+export interface FeaturedCompetitionsResponse {
+  success: boolean;
+  message: string | null;
+  data: {
+    competitions: Competition[];
+    total: number;
+  };
+}
+
 export const competitionService = {
   getCompetitions: async (page: number = 1, name?: string) => {
     try {
@@ -303,4 +323,14 @@ export const competitionService = {
   getMatchDetail: async (fixtureId: number): Promise<AxiosResponse<MatchDetailResponse>> => {
     return api.get(`/fixtures/${fixtureId}`);
   },
+
+  getFeaturedCompetitions: async (): Promise<FeaturedCompetitionsResponse> => {
+    const response = await api.get<FeaturedCompetitionsResponse>('/featured/competitions');
+    return response.data;
+  },
+
+  getCompetitionById: async (id: number): Promise<Competition> => {
+    const response = await api.get<{ data: Competition }>(`/competitions/${id}`);
+    return response.data.data;
+  }
 };
