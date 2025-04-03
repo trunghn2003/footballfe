@@ -53,5 +53,20 @@ export const newsService = {
       console.error('Error fetching news detail:', error);
       throw error;
     }
+  },
+
+  getNewsByCompetition: async (competitionId: number, page: number = 1) => {
+    try {
+      const response = await api.get<NewsResponse>('/news', {
+        params: {
+          competition_id: competitionId,
+          page
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching competition news:', error);
+      throw error;
+    }
   }
 };
