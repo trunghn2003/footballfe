@@ -10,6 +10,7 @@ import Teams from './pages/Teams';
 import Areas from './pages/Areas';
 import AreaDetail from './pages/AreaDetail';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import Competitions from './pages/Competitions';
@@ -65,6 +66,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
                 <Route
                   path="/news"
                   element={

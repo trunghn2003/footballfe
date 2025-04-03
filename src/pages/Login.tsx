@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -125,14 +125,14 @@ const Login = () => {
                 'Đăng nhập'
               )}
             </Button>
-            <Button
-              fullWidth
-              variant="text"
-              onClick={() => navigate('/register')}
-              sx={{ mt: 1 }}
-            >
-              Chưa có tài khoản? Đăng ký ngay
-            </Button>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="body2">
+                Chưa có tài khoản?{' '}
+                <Link to="/register" style={{ textDecoration: 'none' }}>
+                  Đăng ký ngay
+                </Link>
+              </Typography>
+            </Box>
           </Box>
         </Paper>
       </Box>
