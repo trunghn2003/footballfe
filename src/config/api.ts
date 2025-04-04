@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_URL = 'http://157.66.47.51:9000/api';
+export const API_URL = 'https://api.football1.io.vn/api';
 
 // Tạo instance axios với config mặc định
 const api = axios.create({
