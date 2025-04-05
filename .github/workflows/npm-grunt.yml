@@ -46,5 +46,4 @@ jobs:
           docker pull ${{ secrets.DOCKER_USERNAME }}/footballfe:${{ github.sha }}
           docker stop footballfe || true
           docker rm footballfe || true
-          docker run -d --name footballfe -p 5173:8082 --network footballnewsapi_default   ${{ secrets.DOCKER_USERNAME }}/footballfe:${{ github.sha }}
-          
+          docker run -d --name footballfe -p 5173:8082 --restart unless-stopped --network footballnewsapi_default   ${{ secrets.DOCKER_USERNAME }}/footballfe:${{ github.sha }}
