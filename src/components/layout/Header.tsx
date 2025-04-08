@@ -87,7 +87,7 @@ const Header = () => {
             >
               Tin tức
             </Button>
-            {/* <Button
+            <Button
               color="inherit"
               onClick={() => navigate('/matches')}
               sx={{
@@ -106,7 +106,7 @@ const Header = () => {
               }}
             >
               Đội bóng
-            </Button> */}
+            </Button>
             <Button
               color="inherit"
               onClick={() => navigate('/areas')}
@@ -127,6 +127,18 @@ const Header = () => {
             >
               Giải đấu
             </Button>
+            {/* {isAuthenticated && (
+              <Button
+                color="inherit"
+                onClick={() => navigate('/betting')}
+                sx={{
+                  color: location.pathname.startsWith('/betting') ? 'primary.light' : 'inherit',
+                  '&:hover': { color: 'primary.light' }
+                }}
+              >
+                Cá cược
+              </Button>
+            )} */}
           </Box>
           <Box sx={{ display: { xs: 'none', sm: 'flex' }, ml: 2 }}>
             {isAuthenticated ? (
@@ -166,6 +178,9 @@ const Header = () => {
         <MenuItem onClick={() => handleNavigation('/teams')}>Đội bóng</MenuItem>
         <MenuItem onClick={() => handleNavigation('/areas')}>Khu vực</MenuItem>
         <MenuItem onClick={() => handleNavigation('/competitions')}>Giải đấu</MenuItem>
+        {isAuthenticated && (
+          <MenuItem onClick={() => handleNavigation('/betting')}>Cá cược</MenuItem>
+        )}
         {isAuthenticated ? (
           <MenuItem onClick={handleLogout}>Đăng xuất</MenuItem>
         ) : (

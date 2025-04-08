@@ -20,7 +20,7 @@ import {
   Card,
   CardContent
 } from '@mui/material';
-import { ArrowBack } from '@mui/icons-material';
+import { ArrowBack, Casino } from '@mui/icons-material';
 import { competitionService } from '../services/competitionService';
 import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
 import FormationDisplay from '../components/match/FormationDisplay';
@@ -217,13 +217,25 @@ const MatchDetail = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Button
-        startIcon={<ArrowBack />}
-        onClick={() => navigate(-1)}
-        sx={{ mb: 3 }}
-      >
-        Back
-      </Button>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+        <Button
+          startIcon={<ArrowBack />}
+          onClick={() => navigate(-1)}
+        >
+          Back
+        </Button>
+        
+        {isUpcoming && (
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<Casino />}
+            onClick={() => navigate(`/betting/${id}`)}
+          >
+            Đặt cược
+          </Button>
+        )}
+      </Box>
 
       <Card sx={{ mb: 4 }}>
         <CardContent>

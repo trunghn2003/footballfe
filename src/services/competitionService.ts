@@ -332,5 +332,17 @@ export const competitionService = {
   getCompetitionById: async (id: number): Promise<Competition> => {
     const response = await api.get<{ data: Competition }>(`/competitions/${id}`);
     return response.data.data;
+  },
+
+  getUpcomingMatches: async (): Promise<AxiosResponse<FixturesResponse>> => {
+    try {
+      const response = await api.get<FixturesResponse>('/fixtures');
+      return response;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách trận đấu sắp diễn ra');
+      }
+      throw error;
+    }
   }
 };
