@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -15,11 +15,16 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Chip
+  Chip,
+  Button,
+  Card,
+  CardContent
 } from '@mui/material';
+import { ArrowBack } from '@mui/icons-material';
 import { competitionService } from '../services/competitionService';
 import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
 import FormationDisplay from '../components/match/FormationDisplay';
+import MatchPrediction from "../components/match/MatchPrediction"
 
 interface Player {
   id: number;
@@ -97,6 +102,7 @@ interface MatchDetail {
 
 const MatchDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [matchDetail, setMatchDetail] = useState<MatchDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -124,33 +130,24 @@ const MatchDetail = () => {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+      <Container maxWidth="lg" sx={{ py: 4, display: 'flex', justifyContent: 'center' }}>
         <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container>
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
       </Container>
     );
   }
 
-  if (!matchDetail) {
+  if (error || !matchDetail) {
     return (
-      <Container>
-        <Alert severity="warning" sx={{ mt: 2 }}>
-          Không tìm thấy thông tin trận đấu
-        </Alert>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Typography color="error">{error || 'Match not found'}</Typography>
       </Container>
     );
   }
 
   const { fixture, home_lineup, away_lineup } = matchDetail;
+
+  const isUpcoming = fixture.status === 'SCHEDULED' || fixture.status === 'TIMED';
+  const matchDate = new Date(fixture.utcDate);
 
   const renderScore = () => {
     if (fixture.score.fullTime.home !== null && fixture.score.fullTime.away !== null) {
@@ -219,102 +216,94 @@ const MatchDetail = () => {
   };
 
   return (
-    <Container>
-      <Box sx={{ mt: 4 }}>
-        {/* Header Section */}
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Box display="flex" alignItems="center" gap={2}>
-            <img
-              src={fixture.competition.emblem}
-              alt={fixture.competition.name}
-              style={{ width: '80px', height: '80px', objectFit: 'contain' }}
-            />
-            <Box>
-              <Typography variant="h4" gutterBottom>
-                {fixture.competition.name}
-              </Typography>
-              <Typography variant="subtitle1" color="text.secondary">
-                Vòng {fixture.matchday} - {fixture.stage}
-              </Typography>
-            </Box>
-          </Box>
-        </Paper>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Button
+        startIcon={<ArrowBack />}
+        onClick={() => navigate(-1)}
+        sx={{ mb: 3 }}
+      >
+        Back
+      </Button>
 
-        {/* Match Info */}
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Grid container spacing={3} alignItems="center">
-            <Grid item xs={12} md={4}>
-              <Box textAlign="center">
-                <Typography variant="h6">
-                  {fixture.homeTeam?.name || 'TBD'}
-                </Typography>
-                {fixture.homeTeam?.crest && (
-                  <img
-                    src={fixture.homeTeam.crest}
-                    alt={fixture.homeTeam.name}
-                    style={{ width: '60px', height: '60px', objectFit: 'contain' }}
-                  />
-                )}
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Box textAlign="center">
-                {renderScore()}
-                <Typography variant="subtitle1" color="text.secondary">
-                  {new Date(fixture.utcDate).toLocaleString('vi-VN', {
-                    dateStyle: 'full',
-                    timeStyle: 'short'
-                  })}
-                </Typography>
-                <Chip
-                  label={fixture.status}
-                  color={fixture.status === 'FINISHED' ? 'success' : 'primary'}
-                  sx={{ mt: 1 }}
-                />
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Box textAlign="center">
-                <Typography variant="h6">
-                  {fixture.awayTeam?.name || 'TBD'}
-                </Typography>
-                {fixture.awayTeam?.crest && (
-                  <img
-                    src={fixture.awayTeam.crest}
-                    alt={fixture.awayTeam.name}
-                    style={{ width: '60px', height: '60px', objectFit: 'contain' }}
-                  />
-                )}
-              </Box>
-            </Grid>
-          </Grid>
-        </Paper>
-
-        {/* Lineups */}
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h5" gutterBottom display="flex" alignItems="center" gap={1}>
-            <SportsSoccerIcon />
-            Đội hình thi đấu
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Typography variant="h4" component="h1" gutterBottom align="center">
+            {fixture.competition.name}
           </Typography>
-          <Divider sx={{ my: 2 }} />
-
-          {/* Formation Display */}
-          <FormationDisplay
-            homeLineup={home_lineup}
-            awayLineup={away_lineup}
-          />
-
-          {/* Detailed Lineups */}
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              {renderLineup(home_lineup, true)}
+          
+          <Box sx={{ mb: 3, textAlign: 'center' }}>
+            <Chip 
+              label={isUpcoming ? 'Upcoming Match' : fixture.status} 
+              color={isUpcoming ? "info" : "default"}
+              sx={{ mb: 2 }}
+            />
+            <Typography variant="h6" color="text.secondary">
+              {matchDate.toLocaleDateString()} • {matchDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </Typography>
+          </Box>
+          
+          <Grid container spacing={3} alignItems="center" justifyContent="center">
+            <Grid item xs={12} md={4} textAlign="center">
+              <Typography variant="h5" gutterBottom>
+                {fixture.homeTeam?.name || 'TBD'}
+              </Typography>
+              {fixture.homeTeam?.crest && (
+                <img
+                  src={fixture.homeTeam.crest}
+                  alt={fixture.homeTeam.name}
+                  style={{ width: '60px', height: '60px', objectFit: 'contain' }}
+                />
+              )}
             </Grid>
-            <Grid item xs={12} md={6}>
-              {renderLineup(away_lineup, false)}
+            
+            <Grid item xs={12} md={4} textAlign="center">
+              {isUpcoming ? (
+                <Typography variant="h4">VS</Typography>
+              ) : renderScore()}
+            </Grid>
+            
+            <Grid item xs={12} md={4} textAlign="center">
+              <Typography variant="h5" gutterBottom>
+                {fixture.awayTeam?.name || 'TBD'}
+              </Typography>
+              {fixture.awayTeam?.crest && (
+                <img
+                  src={fixture.awayTeam.crest}
+                  alt={fixture.awayTeam.name}
+                  style={{ width: '60px', height: '60px', objectFit: 'contain' }}
+                />
+              )}
             </Grid>
           </Grid>
-        </Paper>
-      </Box>
+        </CardContent>
+      </Card>
+      
+      {isUpcoming && <MatchPrediction matchId={id!} />}
+
+      {/* Lineups */}
+      <Paper sx={{ p: 3 }}>
+        <Typography variant="h5" gutterBottom display="flex" alignItems="center" gap={1}>
+          <SportsSoccerIcon />
+          Đội hình thi đấu
+        </Typography>
+        <Divider sx={{ my: 2 }} />
+
+        {/* Formation Display */}
+        <FormationDisplay
+          homeLineup={home_lineup}
+          awayLineup={away_lineup}
+        />
+
+        {/* Detailed Lineups */}
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            {renderLineup(home_lineup, true)}
+          </Grid>
+          <Grid item xs={12} md={6}>
+            {renderLineup(away_lineup, false)}
+          </Grid>
+        </Grid>
+      </Paper>
     </Container>
   );
 };
