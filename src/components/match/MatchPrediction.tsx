@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Typography, 
-  Grid, 
-  LinearProgress, 
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Grid,
+  LinearProgress,
   Divider,
   List,
   ListItem,
@@ -90,9 +90,10 @@ interface PredictionResponse {
 
 interface MatchPredictionProps {
   matchId: string;
+  onWinProbabilityChange: (prob: WinProbability) => void;
 }
 
-const MatchPrediction = ({ matchId }: MatchPredictionProps) => {
+const MatchPrediction = ({ matchId, onWinProbabilityChange }: MatchPredictionProps) => {
   const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -116,6 +117,12 @@ const MatchPrediction = ({ matchId }: MatchPredictionProps) => {
 
     fetchPrediction();
   }, [matchId]);
+
+  useEffect(() => {
+    if (prediction?.win_probability) {
+      onWinProbabilityChange(prediction.win_probability);
+    }
+  }, [prediction, onWinProbabilityChange]);
 
   if (loading) {
     return (
@@ -141,7 +148,7 @@ const MatchPrediction = ({ matchId }: MatchPredictionProps) => {
       <Typography variant="h5" gutterBottom>
         Match Prediction
       </Typography>
-      
+
       <Grid container spacing={3}>
         {/* Win Probability */}
         <Grid item xs={12} md={6}>
@@ -150,52 +157,52 @@ const MatchPrediction = ({ matchId }: MatchPredictionProps) => {
               <Typography variant="h6" gutterBottom>
                 Win Probability
               </Typography>
-              
+
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2">{upcoming_match.home_team}</Typography>
                   <Typography variant="body2">{win_probability.home}%</Typography>
                 </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={win_probability.home} 
+                <LinearProgress
+                  variant="determinate"
+                  value={win_probability.home}
                   color="primary"
                   sx={{ height: 10, borderRadius: 5 }}
                 />
               </Box>
-              
+
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2">Draw</Typography>
                   <Typography variant="body2">{win_probability.draw}%</Typography>
                 </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={win_probability.draw} 
+                <LinearProgress
+                  variant="determinate"
+                  value={win_probability.draw}
                   color="secondary"
                   sx={{ height: 10, borderRadius: 5 }}
                 />
               </Box>
-              
+
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2">{upcoming_match.away_team}</Typography>
                   <Typography variant="body2">{win_probability.away}%</Typography>
                 </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={win_probability.away} 
+                <LinearProgress
+                  variant="determinate"
+                  value={win_probability.away}
                   color="error"
                   sx={{ height: 10, borderRadius: 5 }}
                 />
               </Box>
-              
+
               <Box sx={{ mt: 3, textAlign: 'center' }}>
                 <Typography variant="h4" gutterBottom>
                   {predicted_score.home} - {predicted_score.away}
                 </Typography>
-                <Chip 
-                  label={`Confidence: ${confidence_level}%`} 
+                <Chip
+                  label={`Confidence: ${confidence_level}%`}
                   color={confidence_level > 70 ? "success" : confidence_level > 50 ? "warning" : "error"}
                   sx={{ mt: 1 }}
                 />
@@ -203,7 +210,7 @@ const MatchPrediction = ({ matchId }: MatchPredictionProps) => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         {/* Key Factors */}
         <Grid item xs={12} md={6}>
           <Card>
@@ -214,12 +221,12 @@ const MatchPrediction = ({ matchId }: MatchPredictionProps) => {
               <List>
                 {key_factors.map((factor, index) => (
                   <ListItem key={index} sx={{ display: 'block', mb: 1 }}>
-                    <ListItemText 
-                      primary={factor.replace(/\*\*/g, '')} 
-                      sx={{ 
-                        '& .MuiListItemText-primary': { 
-                          fontWeight: factor.includes('**') ? 'bold' : 'normal' 
-                        } 
+                    <ListItemText
+                      primary={factor.replace(/\*\*/g, '')}
+                      sx={{
+                        '& .MuiListItemText-primary': {
+                          fontWeight: factor.includes('**') ? 'bold' : 'normal'
+                        }
                       }}
                     />
                   </ListItem>
@@ -228,7 +235,7 @@ const MatchPrediction = ({ matchId }: MatchPredictionProps) => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         {/* Head to Head */}
         <Grid item xs={12}>
           <Card>
@@ -262,7 +269,7 @@ const MatchPrediction = ({ matchId }: MatchPredictionProps) => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         {/* Recent Form */}
         <Grid item xs={12} md={6}>
           <Card>
@@ -296,7 +303,7 @@ const MatchPrediction = ({ matchId }: MatchPredictionProps) => {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
@@ -334,4 +341,4 @@ const MatchPrediction = ({ matchId }: MatchPredictionProps) => {
   );
 };
 
-export default MatchPrediction; 
+export default MatchPrediction;

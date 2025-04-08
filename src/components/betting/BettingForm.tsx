@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Typography, 
-  TextField, 
-  Button, 
-  FormControl, 
-  InputLabel, 
-  Select, 
-  MenuItem, 
-  Grid, 
-  Alert, 
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  TextField,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Grid,
+  Alert,
   CircularProgress,
   InputAdornment
 } from '@mui/material';
@@ -23,9 +23,14 @@ interface BettingFormProps {
   fixtureId: number;
   homeTeam: string;
   awayTeam: string;
+  winProbability: {
+    home: number;
+    draw: number;
+    away: number;
+  };
 }
 
-const BettingForm = ({ fixtureId, homeTeam, awayTeam }: BettingFormProps) => {
+const BettingForm = ({ fixtureId, homeTeam, awayTeam, winProbability }: BettingFormProps) => {
   const [betType, setBetType] = useState<'WIN' | 'DRAW' | 'LOSS' | 'SCORE'>('WIN');
   const [amount, setAmount] = useState<string>('');
   const [homeScore, setHomeScore] = useState<string>('');
@@ -62,24 +67,24 @@ const BettingForm = ({ fixtureId, homeTeam, awayTeam }: BettingFormProps) => {
     }
 
     const amountNum = Number(amount);
-    let multiplier = 1.5; // Mặc định
+    let multiplier = 1;
 
-    // Tính toán tỷ lệ thắng dựa trên loại cược
     switch (betType) {
       case 'WIN':
-        multiplier = 2.0;
+        multiplier = 100 / winProbability.home;
         break;
       case 'DRAW':
-        multiplier = 3.0;
+        multiplier = 100 / winProbability.draw;
         break;
       case 'LOSS':
-        multiplier = 2.0;
+        multiplier = 100 / winProbability.away;
         break;
       case 'SCORE':
-        multiplier = 5.0;
+        multiplier = (100 / (winProbability.home * winProbability.away)) * 1.5;
         break;
     }
 
+    multiplier = Math.round(multiplier * 100) / 100;
     setPotentialWin(amountNum * multiplier);
   };
 
@@ -124,7 +129,7 @@ const BettingForm = ({ fixtureId, homeTeam, awayTeam }: BettingFormProps) => {
 
       // Place bet
       const response = await bettingService.placeBet(betData);
-      
+
       if (response.data.success) {
         setSuccess('Đặt cược thành công!');
         // Reset form
@@ -151,17 +156,17 @@ const BettingForm = ({ fixtureId, homeTeam, awayTeam }: BettingFormProps) => {
           <SportsSoccer sx={{ mr: 1, fontSize: 28 }} />
           <Typography variant="h6">Đặt cược</Typography>
         </Box>
-        
+
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
-        
+
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <Typography variant="body2" color="text.secondary" gutterBottom>
               Số dư hiện tại: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(balance)}
             </Typography>
           </Grid>
-          
+
           <Grid item xs={12}>
             <FormControl fullWidth>
               <InputLabel>Loại cược</InputLabel>
@@ -177,7 +182,7 @@ const BettingForm = ({ fixtureId, homeTeam, awayTeam }: BettingFormProps) => {
               </Select>
             </FormControl>
           </Grid>
-          
+
           {betType === 'SCORE' && (
             <>
               <Grid item xs={6}>
@@ -202,7 +207,7 @@ const BettingForm = ({ fixtureId, homeTeam, awayTeam }: BettingFormProps) => {
               </Grid>
             </>
           )}
-          
+
           <Grid item xs={12}>
             <TextField
               fullWidth
@@ -217,7 +222,7 @@ const BettingForm = ({ fixtureId, homeTeam, awayTeam }: BettingFormProps) => {
               helperText="Từ 10,000đ đến 10,000,000đ"
             />
           </Grid>
-          
+
           {potentialWin > 0 && (
             <Grid item xs={12}>
               <Typography variant="body2" color="text.secondary">
@@ -225,12 +230,12 @@ const BettingForm = ({ fixtureId, homeTeam, awayTeam }: BettingFormProps) => {
               </Typography>
             </Grid>
           )}
-          
+
           <Grid item xs={12}>
-            <Button 
-              variant="contained" 
-              color="primary" 
-              fullWidth 
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
               onClick={handlePlaceBet}
               disabled={loading || !amount || (betType === 'SCORE' && (!homeScore || !awayScore))}
             >
@@ -243,4 +248,4 @@ const BettingForm = ({ fixtureId, homeTeam, awayTeam }: BettingFormProps) => {
   );
 };
 
-export default BettingForm; 
+export default BettingForm;

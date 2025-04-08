@@ -12,11 +12,16 @@ const Betting = () => {
   const [match, setMatch] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [winProbability, setWinProbability] = useState<WinProbability>({
+    home: 33.33,
+    draw: 33.33,
+    away: 33.33
+  });
 
   useEffect(() => {
     const fetchMatch = async () => {
       if (!id) return;
-      
+
       try {
         setLoading(true);
         const response = await matchService.getMatchDetail(parseInt(id));
@@ -76,15 +81,19 @@ const Betting = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           Đặt cược: {match.home_team} vs {match.away_team}
         </Typography>
-        
+
         <Grid container spacing={3}>
           <Grid item xs={12} md={8}>
-            <MatchPrediction matchId={id || '0'} />
+            <MatchPrediction
+              matchId={id || '0'}
+              onWinProbabilityChange={setWinProbability}
+            />
             <Box sx={{ mt: 3 }}>
-              <BettingForm 
-                fixtureId={parseInt(id || '0')} 
-                homeTeam={match.home_team} 
-                awayTeam={match.away_team} 
+              <BettingForm
+                fixtureId={parseInt(id || '0')}
+                homeTeam={match.home_team}
+                awayTeam={match.away_team}
+                winProbability={winProbability}
               />
             </Box>
           </Grid>
@@ -97,4 +106,4 @@ const Betting = () => {
   );
 };
 
-export default Betting; 
+export default Betting;
