@@ -13,11 +13,14 @@ import {
   Alert,
   Chip,
   Divider,
-  Paper
+  Paper,
+  Skeleton
 } from '@mui/material';
 import { SportsSoccer, Casino, History } from '@mui/icons-material';
 import { competitionService } from '../services/competitionService';
 import bettingService from '../services/bettingService';
+import teamService from '../services/teamService';
+import { Team } from '../services/teamService';
 
 interface UpcomingMatch {
   id: number;
@@ -73,18 +76,32 @@ interface BettingHistory {
   };
 }
 
+interface TeamCache {
+  [key: string]: Team;
+}
+
 const BettingHome = () => {
   const [matches, setMatches] = useState<UpcomingMatch[]>([]);
   const [bettingHistory, setBettingHistory] = useState<BettingHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [teamCache, setTeamCache] = useState<TeamCache>({});
   const navigate = useNavigate();
 
-  const transformBettingHistory = (apiData: any[]): BettingHistory[] => {
-    return apiData.map(bet => ({
-      ...bet,
-      predicted_score: bet.predicted_score || null
-    }));
+  const fetchTeamInfo = async (teamId: string) => {
+    if (teamCache[teamId]) return teamCache[teamId];
+
+    try {
+      const response = await teamService.getTeam(teamId);
+      if (response?.data?.success) {
+        const team = response.data.data;
+        setTeamCache(prev => ({ ...prev, [teamId]: team }));
+        return team;
+      }
+    } catch (err) {
+      console.error(`Error fetching team ${teamId}:`, err);
+    }
+    return null;
   };
 
   useEffect(() => {
@@ -131,7 +148,19 @@ const BettingHome = () => {
         // Fetch betting history
         const historyResponse = await bettingService.getBettingHistory();
         if (historyResponse?.data?.success) {
-          setBettingHistory(transformBettingHistory(historyResponse.data.data));
+          setBettingHistory(historyResponse.data.data);
+
+          // Fetch team information for all unique teams
+          const teamIds = new Set<string>();
+          historyResponse.data.data.forEach(bet => {
+            if (bet.fixture) {
+              teamIds.add(bet.fixture.home_team_id);
+              teamIds.add(bet.fixture.away_team_id);
+            }
+          });
+
+          const teamPromises = Array.from(teamIds).map(id => fetchTeamInfo(id));
+          await Promise.all(teamPromises);
         } else {
           console.error('Invalid betting history format:', historyResponse);
         }
@@ -163,6 +192,25 @@ const BettingHome = () => {
       style: 'currency',
       currency: 'VND'
     }).format(amount);
+  };
+
+  const getBetTypeText = (type: string) => {
+    switch (type) {
+      case 'WIN':
+        return 'Đội thắng';
+      case 'LOSS':
+        return 'Đội thua';
+      case 'DRAW':
+        return 'Hòa';
+      case 'SCORE':
+        return 'Tỷ số';
+      default:
+        return type;
+    }
+  };
+
+  const getTeamName = (teamId: string) => {
+    return teamCache[teamId]?.name || 'Đang tải...';
   };
 
   if (loading) {
@@ -202,19 +250,6 @@ const BettingHome = () => {
         return 'Thua';
       default:
         return 'Đang chờ';
-    }
-  };
-
-  const getBetTypeText = (type: string) => {
-    switch (type) {
-      case 'WIN':
-        return 'Đội thắng';
-      case 'LOSS':
-        return 'Đội thua';
-      case 'SCORE':
-        return 'Tỷ số';
-      default:
-        return type;
     }
   };
 
@@ -336,43 +371,63 @@ const BettingHome = () => {
                   {bettingHistory.map((bet) => (
                     <Card key={bet.id} sx={{ mb: 2 }}>
                       <CardContent>
-                        <Typography variant="subtitle1" gutterBottom>
-                          Trận {bet.fixture.home_team_id} vs {bet.fixture.away_team_id}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-                          {formatDate(bet.created_at)}
-                        </Typography>
-                        <Box sx={{ mt: 1 }}>
-                          <Typography variant="body2">
-                            Loại cược: {getBetTypeText(bet.bet_type)}
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                          <Typography variant="subtitle1" color="text.secondary">
+                            {formatDate(bet.created_at)}
                           </Typography>
-                          {bet.bet_type === 'SCORE' && (
-                            <Typography variant="body2">
-                              Dự đoán: {getBetValueText(bet)}
-                            </Typography>
-                          )}
-                          <Typography variant="body2">
-                            Số tiền: {formatMoney(bet.amount)}
-                          </Typography>
-                          <Typography variant="body2">
-                            Tỷ lệ cược: {bet.odds}
-                          </Typography>
-                          <Typography variant="body2" color="success.main">
-                            Tiền thắng: {formatMoney(bet.potential_win)}
-                          </Typography>
-                          {bet.result && (
-                            <Typography variant="body2" color="text.secondary">
-                              Kết quả: {bet.result}
-                            </Typography>
-                          )}
-                        </Box>
-                        <Box sx={{ mt: 2 }}>
                           <Chip
                             label={getBetStatusText(bet.status.toLowerCase())}
                             color={getBetStatusColor(bet.status.toLowerCase())}
                             size="small"
                           />
                         </Box>
+
+                        <Box sx={{ mb: 2 }}>
+                          <Typography variant="h6" gutterBottom>
+                            {getTeamName(bet.fixture?.home_team_id || '')} vs {getTeamName(bet.fixture?.away_team_id || '')}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Loại cược: {getBetTypeText(bet.bet_type)}
+                            {bet.predicted_score && (
+                              <span> ({bet.predicted_score.home} - {bet.predicted_score.away})</span>
+                            )}
+                          </Typography>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box>
+                            <Typography variant="body2" color="text.secondary">
+                              Số tiền cược:
+                            </Typography>
+                            <Typography variant="body1" fontWeight="bold">
+                              {formatMoney(bet.amount)}
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography variant="body2" color="text.secondary">
+                              Tiền thắng:
+                            </Typography>
+                            <Typography variant="body1" fontWeight="bold" color="success.main">
+                              {formatMoney(bet.potential_win)}
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography variant="body2" color="text.secondary">
+                              Tỷ lệ cược:
+                            </Typography>
+                            <Typography variant="body1" fontWeight="bold">
+                              {bet.odds}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        {bet.result && (
+                          <Box sx={{ mt: 2 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Kết quả: {bet.result}
+                            </Typography>
+                          </Box>
+                        )}
                       </CardContent>
                     </Card>
                   ))}
