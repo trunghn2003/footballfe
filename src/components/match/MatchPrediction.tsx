@@ -120,7 +120,9 @@ const MatchPrediction = ({ matchId, onWinProbabilityChange }: MatchPredictionPro
 
   useEffect(() => {
     if (prediction?.win_probability) {
-      onWinProbabilityChange(prediction.win_probability);
+      if (typeof onWinProbabilityChange === 'function') {
+        onWinProbabilityChange(prediction.win_probability);
+      }
     }
   }, [prediction, onWinProbabilityChange]);
 

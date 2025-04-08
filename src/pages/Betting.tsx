@@ -47,6 +47,10 @@ const Betting = () => {
     fetchMatch();
   }, [id]);
 
+  const handleWinProbabilityChange = (prob: WinProbability) => {
+    setWinProbability(prob);
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -86,7 +90,7 @@ const Betting = () => {
           <Grid item xs={12} md={8}>
             <MatchPrediction
               matchId={id || '0'}
-              onWinProbabilityChange={setWinProbability}
+              onWinProbabilityChange={handleWinProbabilityChange}
             />
             <Box sx={{ mt: 3 }}>
               <BettingForm
