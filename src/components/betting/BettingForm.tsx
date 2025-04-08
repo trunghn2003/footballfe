@@ -80,7 +80,7 @@ const BettingForm = ({ fixtureId, homeTeam, awayTeam, winProbability }: BettingF
         multiplier = 100 / winProbability.away;
         break;
       case 'SCORE':
-        multiplier = (100 / (winProbability.home * winProbability.away)) * 1.5;
+        multiplier = 5;
         break;
     }
 
