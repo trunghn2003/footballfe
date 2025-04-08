@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://api.football1.io.vn',
+  baseURL: import.meta.env.VITE_API_URL || 'https://api.football1.io.vn/api',
 });
 
 // Request interceptor - thêm token vào header
