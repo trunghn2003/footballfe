@@ -127,7 +127,7 @@ const Header = () => {
             >
               Giải đấu
             </Button>
-            {/* {isAuthenticated && (
+            {isAuthenticated && (
               <Button
                 color="inherit"
                 onClick={() => navigate('/betting')}
@@ -138,7 +138,7 @@ const Header = () => {
               >
                 Cá cược
               </Button>
-            )} */}
+            )}
           </Box>
           <Box sx={{ display: { xs: 'none', sm: 'flex' }, ml: 2 }}>
             {isAuthenticated ? (

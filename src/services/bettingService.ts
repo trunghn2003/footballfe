@@ -77,4 +77,4 @@ const bettingService = {
   }
 };
 
-export default bettingService; 
+export default bettingService;

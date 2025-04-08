@@ -87,7 +87,7 @@ const Betting = () => {
         </Typography>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} md={8}>
+          <Grid item xs={12} md={12}>
             <MatchPrediction
               matchId={id || '0'}
               onWinProbabilityChange={handleWinProbabilityChange}
@@ -101,7 +101,7 @@ const Betting = () => {
               />
             </Box>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={12}>
             <BettingHistory />
           </Grid>
         </Grid>
