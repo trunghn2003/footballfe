@@ -20,6 +20,7 @@ import MatchDetail from './pages/MatchDetail';
 import NewsDetail from './pages/NewsDetail';
 import Betting from './pages/Betting';
 import BettingHome from './pages/BettingHome';
+import Ranking from './pages/Ranking';
 
 const theme = createTheme({
   palette: {
@@ -162,6 +163,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <Betting />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/ranking"
+                  element={
+                    <ProtectedRoute>
+                      <Ranking />
                     </ProtectedRoute>
                   }
                 />

@@ -12,9 +12,13 @@ import {
   Container,
   useTheme,
   useMediaQuery,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useAuth } from '../../contexts/AuthContext';
+import { Link } from 'react-router-dom';
+import { Home, SportsSoccer, EmojiEvents } from '@mui/icons-material';
 
 const Header = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -127,6 +131,16 @@ const Header = () => {
             >
               Giải đấu
             </Button>
+            <Button
+              color="inherit"
+              onClick={() => navigate('/ranking')}
+              sx={{
+                color: location.pathname === '/ranking' ? 'primary.light' : 'inherit',
+                '&:hover': { color: 'primary.light' }
+              }}
+            >
+              Bảng xếp hạng
+            </Button>
             {isAuthenticated && (
               <Button
                 color="inherit"
@@ -178,6 +192,12 @@ const Header = () => {
         <MenuItem onClick={() => handleNavigation('/teams')}>Đội bóng</MenuItem>
         <MenuItem onClick={() => handleNavigation('/areas')}>Khu vực</MenuItem>
         <MenuItem onClick={() => handleNavigation('/competitions')}>Giải đấu</MenuItem>
+        <MenuItem onClick={() => handleNavigation('/ranking')}>
+          <ListItemIcon>
+            <EmojiEvents fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Bảng xếp hạng</ListItemText>
+        </MenuItem>
         {isAuthenticated && (
           <MenuItem onClick={() => handleNavigation('/betting')}>Cá cược</MenuItem>
         )}
