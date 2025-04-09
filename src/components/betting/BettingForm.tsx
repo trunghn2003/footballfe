@@ -217,9 +217,9 @@ const BettingForm = ({ fixtureId, homeTeam, awayTeam, winProbability }: BettingF
               onChange={(e) => setAmount(e.target.value)}
               InputProps={{
                 startAdornment: <InputAdornment position="start">₫</InputAdornment>,
-                inputProps: { min: 10000, max: 10000000 }
+                inputProps: { min: 10000, max: 1000000000 }
               }}
-              helperText="Từ 10,000đ đến 10,000,000đ"
+              helperText="Từ 10,000đ đến 1,000,000,000đ"
             />
           </Grid>
 
