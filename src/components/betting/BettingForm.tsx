@@ -95,7 +95,7 @@ const BettingForm = ({ fixtureId, homeTeam, awayTeam, winProbability }: BettingF
       setSuccess(null);
 
       // Validate input
-      if (!amount || isNaN(Number(amount)) || Number(amount) < 10000 || Number(amount) > 10000000) {
+      if (!amount || isNaN(Number(amount)) || Number(amount) < 10000 || Number(amount) > 1000000000) {
         setError('Số tiền cược phải từ 10,000đ đến 10,000,000đ');
         setLoading(false);
         return;
