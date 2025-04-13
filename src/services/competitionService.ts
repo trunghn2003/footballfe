@@ -344,5 +344,9 @@ export const competitionService = {
       }
       throw error;
     }
+  },
+
+  getMatchLineup: async (matchId: number) => {
+    return await api.get(`/fixtures/lineup/${matchId}`);
   }
 };

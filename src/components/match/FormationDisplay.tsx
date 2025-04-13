@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Typography, Paper } from "@mui/material";
+import StarIcon from '@mui/icons-material/Star';
 
 interface Player {
   id: number;
@@ -8,6 +9,10 @@ interface Player {
   shirt_number: number;
   is_substitute: number;
   grid?: string; // Represents player's row:column position
+  statistics: {
+    rating?: number;
+    [key: string]: any;
+  };
 }
 
 interface FormationDisplayProps {
@@ -22,6 +27,16 @@ interface FormationDisplayProps {
 }
 
 const FormationDisplay = ({ homeLineup, awayLineup }: FormationDisplayProps) => {
+  const getRatingColor = (rating: number | undefined) => {
+    if (!rating) return '#9e9e9e'; // Default gray for no rating
+
+    if (rating >= 8.0) return '#2196f3'; // Blue for excellent
+    if (rating >= 7.0) return '#8bc34a'; // Light green for good
+    if (rating >= 6.0) return '#ffc107'; // Yellow for average
+    if (rating >= 5.0) return '#ff9800'; // Orange for below average
+    return '#f44336'; // Red for poor
+  };
+
   /**
    * Calculates the position of a player on the field based on their `grid` and lineup context.
    * Properly fits players within the football field boundaries.
@@ -106,6 +121,24 @@ const FormationDisplay = ({ homeLineup, awayLineup }: FormationDisplayProps) => 
     };
   };
 
+  const formatPlayerName = (name: string) => {
+    const parts = name.split(' ');
+    if (parts.length === 1) return name;
+    return `${parts[0][0]}. ${parts.slice(1).join(' ')}`;
+  };
+
+  // Find MOTM across both teams
+  const findOverallMOTM = () => {
+    const allPlayers = [...Object.values(homeLineup.startXI), ...Object.values(awayLineup.startXI)];
+    return allPlayers.reduce((highest, current) => {
+      const currentRating = current.statistics?.rating || 0;
+      const highestRating = highest?.statistics?.rating || 0;
+      return currentRating > highestRating ? current : highest;
+    });
+  };
+
+  const overallMOTM = findOverallMOTM();
+
   /**
    * Renders an individual player on the field.
    */
@@ -117,16 +150,9 @@ const FormationDisplay = ({ homeLineup, awayLineup }: FormationDisplayProps) => 
     if (!player.grid) return null;
 
     const { top, left } = calculatePosition(player.grid, isHome, lineup);
-
-    // Determine player abbreviation based on position
-    let positionAbbr = "";
-    if (player.position) {
-      if (player.position.includes("Goalkeeper")) positionAbbr = "GK";
-      else if (player.position.includes("Defender")) positionAbbr = "DEF";
-      else if (player.position.includes("Midfielder")) positionAbbr = "MID";
-      else if (player.position.includes("Forward") || player.position.includes("Striker")) positionAbbr = "FWD";
-      else positionAbbr = player.position.slice(0, 3);
-    }
+    const rating = player.statistics?.rating;
+    const ratingColor = getRatingColor(rating);
+    const isMOTM = player.id === overallMOTM.id;
 
     return (
       <Box
@@ -136,30 +162,76 @@ const FormationDisplay = ({ homeLineup, awayLineup }: FormationDisplayProps) => 
           top,
           left,
           transform: "translate(-50%, -50%)",
-          width: "36px",
-          height: "36px",
+          width: "64px",
+          height: "64px",
           zIndex: 1,
         }}
       >
+        {rating && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: "-20px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              color: "white",
+              fontSize: "0.8rem",
+              fontWeight: "bold",
+              textShadow: "1px 1px 2px rgba(0,0,0,0.5)",
+              minWidth: "32px",
+              textAlign: "center"
+            }}
+          >
+            {rating.toFixed(1)}
+          </Box>
+        )}
         <Box
           sx={{
             width: "100%",
             height: "100%",
-            backgroundColor: isHome ? "#9ccc65" : "#90caf9", // Differentiates home and away players
-            clipPath: "polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%)",
+            backgroundColor: ratingColor,
+            borderRadius: "50%",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
             color: "white",
             fontWeight: "bold",
+            transition: "all 0.3s ease",
+            border: "2px solid white",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+            "&:hover": {
+              transform: "scale(1.1)",
+              zIndex: 2,
+            },
           }}
         >
-          <Typography variant="caption" sx={{ fontSize: "0.7rem", lineHeight: 1 }}>
-            {player.shirt_number}
-          </Typography>
-          <Typography variant="caption" sx={{ fontSize: "0.6rem", lineHeight: 1 }}>
-            {positionAbbr}
+          {isMOTM && (
+            <StarIcon
+              sx={{
+                position: 'absolute',
+                top: '-8px',
+                right: '-8px',
+                color: '#FFD700',
+                fontSize: '24px',
+                filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.3))'
+              }}
+            />
+          )}
+          <Typography
+            variant="caption"
+            sx={{
+              fontSize: "0.7rem",
+              lineHeight: 1.2,
+              maxWidth: "56px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              textAlign: "center",
+              padding: "0 4px"
+            }}
+          >
+            {formatPlayerName(player.name)}
           </Typography>
         </Box>
       </Box>
@@ -172,6 +244,9 @@ const FormationDisplay = ({ homeLineup, awayLineup }: FormationDisplayProps) => 
         p: 2,
         mb: 3,
         backgroundColor: "#1b5e20", // Dark green background for contrast
+        width: "100%",
+        maxWidth: "1200px",
+        margin: "0 auto"
       }}
     >
       {/* Formation Header */}
@@ -188,7 +263,8 @@ const FormationDisplay = ({ homeLineup, awayLineup }: FormationDisplayProps) => 
       <Box
         sx={{
           position: "relative",
-          height: "500px",
+          height: "80vh",
+          width: "100%",
           border: "2px solid white",
           borderRadius: "4px",
           backgroundColor: "#2e7d32", // Green field color
@@ -217,8 +293,8 @@ const FormationDisplay = ({ homeLineup, awayLineup }: FormationDisplayProps) => 
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: "100px",
-            height: "100px",
+            width: "150px",
+            height: "150px",
             border: "1px solid rgba(255,255,255,0.5)",
             borderRadius: "50%",
           }}
@@ -290,8 +366,8 @@ const FormationDisplay = ({ homeLineup, awayLineup }: FormationDisplayProps) => 
             key={i}
             sx={{
               position: "absolute",
-              width: "20px",
-              height: "20px",
+              width: "30px",
+              height: "30px",
               border: "1px solid rgba(255,255,255,0.5)",
               borderRadius: "50%",
               ...{
@@ -311,6 +387,30 @@ const FormationDisplay = ({ homeLineup, awayLineup }: FormationDisplayProps) => 
         {Object.values(awayLineup.startXI).map((player) =>
           renderPlayer(player, false, awayLineup)
         )}
+      </Box>
+
+      {/* Rating Legend */}
+      <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ width: 20, height: 20, backgroundColor: '#4caf50', borderRadius: '50%' }} />
+          <Typography variant="caption" sx={{ color: 'white' }}>8.0+</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ width: 20, height: 20, backgroundColor: '#8bc34a', borderRadius: '50%' }} />
+          <Typography variant="caption" sx={{ color: 'white' }}>7.0-7.9</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ width: 20, height: 20, backgroundColor: '#ffc107', borderRadius: '50%' }} />
+          <Typography variant="caption" sx={{ color: 'white' }}>6.0-6.9</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ width: 20, height: 20, backgroundColor: '#ff9800', borderRadius: '50%' }} />
+          <Typography variant="caption" sx={{ color: 'white' }}>5.0-5.9</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ width: 20, height: 20, backgroundColor: '#f44336', borderRadius: '50%' }} />
+          <Typography variant="caption" sx={{ color: 'white' }}>&lt;5.0</Typography>
+        </Box>
       </Box>
     </Paper>
   );

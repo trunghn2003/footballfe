@@ -9,40 +9,91 @@ import {
   Alert,
   Grid,
   Divider,
+  LinearProgress,
+  Chip,
+  Button,
+  Card,
+  CardContent,
+  Tab,
+  Tabs,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Chip,
-  Button,
-  Card,
-  CardContent
+  Rating
 } from '@mui/material';
-import { ArrowBack, Casino } from '@mui/icons-material';
+import { ArrowBack, Casino, SportsSoccer, Person } from '@mui/icons-material';
 import { competitionService } from '../services/competitionService';
 import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
-import FormationDisplay from '../components/match/FormationDisplay';
 import MatchPrediction from "../components/match/MatchPrediction"
+import FormationDisplay from "../components/match/FormationDisplay"
+
+interface StatisticItem {
+  name: string;
+  home: string;
+  away: string;
+  compareCode: number;
+  statisticsType: string;
+  valueType: string;
+  homeValue: number;
+  awayValue: number;
+  homeTotal: number | null;
+  awayTotal: number | null;
+  renderType: number;
+  key: string;
+}
+
+interface StatisticGroup {
+  groupName: string;
+  statisticsItems: StatisticItem[];
+}
+
+interface StatisticPeriod {
+  period: string;
+  groups: StatisticGroup[];
+}
+
+interface PlayerStatistics {
+  goals?: number;
+  assists?: number;
+  rating?: number;
+  minutesPlayed?: number;
+  touches?: number;
+  passes?: number;
+  accuratePass?: number;
+  keyPass?: number;
+  totalTackle?: number;
+  interceptionWon?: number;
+  duelWon?: number;
+  duelLost?: number;
+  dispossessed?: number;
+  fouls?: number;
+  wasFouled?: number;
+  saves?: number;
+  [key: string]: any;
+}
 
 interface Player {
   id: number;
-  position: string | null;
   name: string;
+  position: string | null;
   shirt_number: number;
   is_substitute: number;
   grid?: string;
+  statistics: PlayerStatistics;
 }
 
-interface Lineup {
+interface TeamLineup {
   formation: string;
-  startXI: {
-    [key: string]: Player;
-  };
-  sub: {
-    [key: string]: Player;
-  };
+  startXI: { [key: string]: Player };
+  sub: { [key: string]: Player };
+}
+
+interface LineupData {
+  home_lineup: TeamLineup;
+  away_lineup: TeamLineup;
 }
 
 interface MatchDetail {
@@ -96,36 +147,62 @@ interface MatchDetail {
       };
     };
   };
-  home_lineup: Lineup;
-  away_lineup: Lineup;
+  statistics: any[];
+}
+
+interface ApiResponse {
+  success: boolean;
+  data: {
+    fixture: any;
+    statistics: any[];
+    home_lineup?: TeamLineup;
+    away_lineup?: TeamLineup;
+  };
+  message?: string;
 }
 
 const MatchDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [matchDetail, setMatchDetail] = useState<MatchDetail | null>(null);
+  const [lineup, setLineup] = useState<LineupData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("ALL");
+  const [activeTab, setActiveTab] = useState(0);
 
   useEffect(() => {
-    const fetchMatchDetail = async () => {
+    const fetchData = async () => {
       try {
         if (!id) return;
         setLoading(true);
-        const response = await competitionService.getMatchDetail(parseInt(id));
-        if (response.data.success) {
-          setMatchDetail(response.data.data);
-        } else {
-          setError(response.data.message || 'Không thể tải thông tin trận đấu');
+
+        const [matchResponse, lineupResponse] = await Promise.all([
+          competitionService.getMatchDetail(parseInt(id)),
+          competitionService.getMatchLineup(parseInt(id))
+        ]);
+
+        if (matchResponse.data.success) {
+          const responseData = matchResponse.data.data as ApiResponse['data'];
+          const matchDetailData: MatchDetail = {
+            fixture: responseData.fixture,
+            statistics: responseData.statistics || []
+          };
+          setMatchDetail(matchDetailData);
+        }
+
+        if (lineupResponse.data.success) {
+          setLineup(lineupResponse.data.data);
         }
       } catch (err) {
+        console.error('API Error:', err);
         setError(err instanceof Error ? err.message : 'Lỗi khi tải dữ liệu');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchMatchDetail();
+    fetchData();
   }, [id]);
 
   if (loading) {
@@ -144,7 +221,7 @@ const MatchDetail = () => {
     );
   }
 
-  const { fixture, home_lineup, away_lineup } = matchDetail;
+  const { fixture, statistics } = matchDetail;
 
   const isUpcoming = fixture.status === 'SCHEDULED' || fixture.status === 'TIMED';
   const matchDate = new Date(fixture.utcDate);
@@ -160,58 +237,217 @@ const MatchDetail = () => {
     return <Typography variant="h4" fontWeight="bold">vs</Typography>;
   };
 
-  const renderLineup = (lineup: Lineup, isHome: boolean) => {
-    const players = Object.values(lineup.startXI);
-    const substitutes = Object.values(lineup.sub);
+  const renderMatchStats = () => {
+    if (!matchDetail?.statistics || matchDetail.statistics.length === 0) {
+      return null;
+    }
+
+    const currentPeriodStats = matchDetail.statistics.find(s => s.period === selectedPeriod);
+    if (!currentPeriodStats) return null;
 
     return (
-      <Box>
-        <Typography variant="h6" gutterBottom>
-          {isHome ? 'Đội nhà' : 'Đội khách'} - Sơ đồ {lineup.formation}
-        </Typography>
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Số</TableCell>
-                <TableCell>Vị trí</TableCell>
-                <TableCell>Cầu thủ</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {players.map((player) => (
-                <TableRow key={player.id}>
-                  <TableCell>{player.shirt_number}</TableCell>
-                  <TableCell>{player.position}</TableCell>
-                  <TableCell>{player.name}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+      <Paper sx={{ p: 3, mt: 4 }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Tabs
+            value={selectedPeriod}
+            onChange={(_, newValue) => setSelectedPeriod(newValue)}
+            variant="fullWidth"
+          >
+            <Tab label="Toàn trận" value="ALL" />
+            <Tab label="Hiệp 1" value="1ST" />
+            <Tab label="Hiệp 2" value="2ND" />
+          </Tabs>
+        </Box>
 
-        <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-          Dự bị
+        {currentPeriodStats.groups.map((group: StatisticGroup, groupIndex: number) => (
+          <Box key={groupIndex} sx={{ mb: 4 }}>
+            <Typography variant="h6" gutterBottom sx={{ color: 'primary.main' }}>
+              {group.groupName}
+            </Typography>
+            <Box sx={{ mt: 2 }}>
+              {group.statisticsItems.map((stat: StatisticItem, index: number) => {
+                const total = stat.homeValue + stat.awayValue;
+                const homePercent = total === 0 ? 50 : (stat.homeValue / total) * 100;
+                const awayPercent = total === 0 ? 50 : (stat.awayValue / total) * 100;
+
+                return (
+                  <Box key={index} sx={{ mb: 2 }}>
+                    <Grid container alignItems="center" spacing={2}>
+                      {/* Home team stat */}
+                      <Grid item xs={2} sx={{ textAlign: 'right' }}>
+                        <Typography variant="body2" fontWeight="bold" color={stat.compareCode === 1 ? 'primary.main' : 'text.primary'}>
+                          {stat.home}
+                        </Typography>
+                      </Grid>
+
+                      {/* Progress bars */}
+                      <Grid item xs={8}>
+                        <Typography variant="body2" align="center" gutterBottom>
+                          {stat.name}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Box sx={{ flex: 1, transform: 'scaleX(-1)' }}>
+                            <LinearProgress
+                              variant="determinate"
+                              value={homePercent}
+                              sx={{
+                                height: 8,
+                                borderRadius: 4,
+                                backgroundColor: '#e0e0e0',
+                                '& .MuiLinearProgress-bar': {
+                                  backgroundColor: stat.statisticsType === 'positive' ? '#2196f3' : '#ff9800',
+                                  borderRadius: 4,
+                                },
+                              }}
+                            />
+                          </Box>
+                          <Box sx={{ flex: 1 }}>
+                            <LinearProgress
+                              variant="determinate"
+                              value={awayPercent}
+                              sx={{
+                                height: 8,
+                                borderRadius: 4,
+                                backgroundColor: '#e0e0e0',
+                                '& .MuiLinearProgress-bar': {
+                                  backgroundColor: stat.statisticsType === 'positive' ? '#4caf50' : '#f44336',
+                                  borderRadius: 4,
+                                },
+                              }}
+                            />
+                          </Box>
+                        </Box>
+                      </Grid>
+
+                      {/* Away team stat */}
+                      <Grid item xs={2}>
+                        <Typography variant="body2" fontWeight="bold" color={stat.compareCode === 2 ? 'primary.main' : 'text.primary'}>
+                          {stat.away}
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                );
+              })}
+            </Box>
+          </Box>
+        ))}
+      </Paper>
+    );
+  };
+
+  const renderPlayerStats = (player: Player) => {
+    if (!player.statistics || Object.keys(player.statistics).length === 0) {
+      return null;
+    }
+
+    const stats = player.statistics;
+    return (
+      <>
+        {stats.rating && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Rating value={stats.rating / 2} precision={0.1} readOnly size="small" />
+            <Typography variant="body2">({stats.rating})</Typography>
+          </Box>
+        )}
+        <Typography variant="body2" color="text.secondary">
+          {stats.minutesPlayed}' |
+          {stats.goals ? ` ${stats.goals} goals |` : ''}
+          {stats.assists ? ` ${stats.assists} assists |` : ''}
+          {stats.keyPass ? ` ${stats.keyPass} key passes |` : ''}
+          {stats.saves ? ` ${stats.saves} saves` : ''}
         </Typography>
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Số</TableCell>
-                <TableCell>Cầu thủ</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {substitutes.map((player) => (
-                <TableRow key={player.id}>
-                  <TableCell>{player.shirt_number}</TableCell>
-                  <TableCell>{player.name}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Box>
+      </>
+    );
+  };
+
+  const renderLineups = () => {
+    if (!lineup) return null;
+
+    return (
+      <Paper sx={{ p: 3, mt: 4 }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Tabs
+            value={activeTab}
+            onChange={(_, newValue) => setActiveTab(newValue)}
+            variant="fullWidth"
+          >
+            <Tab label="Formation" />
+            <Tab label="Player List" />
+          </Tabs>
+        </Box>
+
+        {activeTab === 0 ? (
+          <FormationDisplay
+            homeLineup={lineup.home_lineup}
+            awayLineup={lineup.away_lineup}
+          />
+        ) : (
+          <Grid container spacing={3}>
+            {/* Home Team */}
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" gutterBottom color="primary">
+                {matchDetail?.fixture.homeTeam?.name} ({lineup.home_lineup.formation})
+              </Typography>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>#</TableCell>
+                      <TableCell>Player</TableCell>
+                      <TableCell>Position</TableCell>
+                      <TableCell>Stats</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {Object.values(activeTab === 0 ? lineup.home_lineup.startXI : lineup.home_lineup.sub)
+                      .sort((a, b) => (a.grid || '').localeCompare(b.grid || ''))
+                      .map((player) => (
+                        <TableRow key={player.id}>
+                          <TableCell>{player.shirt_number}</TableCell>
+                          <TableCell>{player.name}</TableCell>
+                          <TableCell>{player.position || '-'}</TableCell>
+                          <TableCell>{renderPlayerStats(player)}</TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Grid>
+
+            {/* Away Team */}
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" gutterBottom color="primary">
+                {matchDetail?.fixture.awayTeam?.name} ({lineup.away_lineup.formation})
+              </Typography>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>#</TableCell>
+                      <TableCell>Player</TableCell>
+                      <TableCell>Position</TableCell>
+                      <TableCell>Stats</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {Object.values(activeTab === 0 ? lineup.away_lineup.startXI : lineup.away_lineup.sub)
+                      .sort((a, b) => (a.grid || '').localeCompare(b.grid || ''))
+                      .map((player) => (
+                        <TableRow key={player.id}>
+                          <TableCell>{player.shirt_number}</TableCell>
+                          <TableCell>{player.name}</TableCell>
+                          <TableCell>{player.position || '-'}</TableCell>
+                          <TableCell>{renderPlayerStats(player)}</TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Grid>
+          </Grid>
+        )}
+      </Paper>
     );
   };
 
@@ -224,7 +460,7 @@ const MatchDetail = () => {
         >
           Back
         </Button>
-        
+
         {isUpcoming && (
           <Button
             variant="contained"
@@ -242,10 +478,10 @@ const MatchDetail = () => {
           <Typography variant="h4" component="h1" gutterBottom align="center">
             {fixture.competition.name}
           </Typography>
-          
+
           <Box sx={{ mb: 3, textAlign: 'center' }}>
-            <Chip 
-              label={isUpcoming ? 'Upcoming Match' : fixture.status} 
+            <Chip
+              label={isUpcoming ? 'Upcoming Match' : fixture.status}
               color={isUpcoming ? "info" : "default"}
               sx={{ mb: 2 }}
             />
@@ -253,7 +489,7 @@ const MatchDetail = () => {
               {matchDate.toLocaleDateString()} • {matchDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </Typography>
           </Box>
-          
+
           <Grid container spacing={3} alignItems="center" justifyContent="center">
             <Grid item xs={12} md={4} textAlign="center">
               <Typography variant="h5" gutterBottom>
@@ -267,13 +503,11 @@ const MatchDetail = () => {
                 />
               )}
             </Grid>
-            
+
             <Grid item xs={12} md={4} textAlign="center">
-              {isUpcoming ? (
-                <Typography variant="h4">VS</Typography>
-              ) : renderScore()}
+              {renderScore()}
             </Grid>
-            
+
             <Grid item xs={12} md={4} textAlign="center">
               <Typography variant="h5" gutterBottom>
                 {fixture.awayTeam?.name || 'TBD'}
@@ -289,33 +523,18 @@ const MatchDetail = () => {
           </Grid>
         </CardContent>
       </Card>
-      
-      {isUpcoming && <MatchPrediction matchId={id!} />}
 
-      {/* Lineups */}
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h5" gutterBottom display="flex" alignItems="center" gap={1}>
-          <SportsSoccerIcon />
-          Đội hình thi đấu
-        </Typography>
-        <Divider sx={{ my: 2 }} />
+      {renderMatchStats()}
+      {renderLineups()}
 
-        {/* Formation Display */}
-        <FormationDisplay
-          homeLineup={home_lineup}
-          awayLineup={away_lineup}
+      {isUpcoming && id && (
+        <MatchPrediction
+          matchId={id}
+          onWinProbabilityChange={(probability) => {
+            console.log('Win probability changed:', probability);
+          }}
         />
-
-        {/* Detailed Lineups */}
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            {renderLineup(home_lineup, true)}
-          </Grid>
-          <Grid item xs={12} md={6}>
-            {renderLineup(away_lineup, false)}
-          </Grid>
-        </Grid>
-      </Paper>
+      )}
     </Container>
   );
 };
